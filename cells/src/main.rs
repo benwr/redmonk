@@ -15,30 +15,42 @@ use ca::*;
 
 pub struct App {
     gl: GlGraphics,
-    rotation: f64,
+    aut: ElementaryCellularAutomaton
 }
 
 impl App {
-    fn render(&mut self, args: &RenderArgs) {
+    fn render(&mut self, args: &RenderArgs, history: &Vec<Vec<bool>>) {
         use graphics::*;
-        const GREEN: [f32; 4] = [0.0, 1.0, 0.0, 1.0];
-        const RED: [f32; 4] = [1.0, 0.0, 0.0, 1.0];
+        const BLACK: [f32; 4] = [0.0, 0.0, 0.0, 1.0];
+        const WHITE: [f32; 4] = [1.0, 1.0, 1.0, 1.0];
 
-        let square = rectangle::square(0.0, 0.0, 50.0);
-        let rotation = self.rotation;
-        let (x, y) = ((args.width / 2) as f64,
-                      (args.height / 2) as f64);
+        let square = rectangle::square(0.0, 0.0, 10.0);
         self.gl.draw(args.viewport(), |c, gl| {
-            clear(GREEN, gl);
-            let transform = c.transform.trans(x, y)
-                .rot_rad(rotation)
-                .trans(-25.0, -25.0);
-
-            rectangle(RED, square, transform, gl);
+            clear(WHITE, gl);
+            for y in 0..history.len() {
+                for x in 0..history[y].len() {
+                    let transform = c.transform
+                        .trans((x * 12) as f64, (y * 12) as f64);
+                    if history[y][x] {
+                        rectangle(BLACK, square, transform, gl);
+                    }
+                }
+            }
         });
     }
-    fn update(&mut self, args: &UpdateArgs) {
-        self.rotation += 2.0 * args.dt;
+    fn update(&mut self, args: &UpdateArgs, history: &mut Vec<Vec<bool>>) {
+        if history.len() > 80 {
+            return;
+        }
+        let last_state = if history.len() > 0 {
+            match history.last() {
+                Some(ref state) => state.to_vec(),
+                None => vec![],
+            }
+        } else {
+            vec![]
+        };
+        history.push(self.aut.successor(&last_state))
     }
 }
 
@@ -46,8 +58,8 @@ fn main() {
     let opengl = OpenGL::V3_2;
 
     let mut window: Window = WindowSettings::new(
-        "spinning-square",
-        [200, 200]
+        "Rule 30",
+        [800, 800]
         )
         .opengl(opengl)
         .exit_on_esc(true)
@@ -55,15 +67,31 @@ fn main() {
         .unwrap();
     let mut app = App {
         gl: GlGraphics::new(opengl),
-        rotation: 0.0
+        aut: ElementaryCellularAutomaton {
+            rule: 110,
+            size: 80,
+            wrap: true,
+            default: false,
+        }
     };
+    let mut history = vec![vec![
+        false, false, false, true, true, false, false, false, true, 
+        false, false, false, true, true, false, false, false, true, 
+        false, false, false, false, true, false, false, false, true, 
+        false, false, false, false, true, false, false, false, true, 
+        false, false, false, false, true, true, false, false, true, 
+        false, false, false, true, true, false, false, false, true, 
+        false, false, false, true, true, false, false, false, true, 
+        false, false, false, true, true, false, false, false, true, 
+        false, false, false, true, true, false, false, false,
+    ]];
     let mut events = window.events();
     while let Some(e) = events.next(&mut window) {
         if let Some(r) = e.render_args() {
-            app.render(&r);
+            app.render(&r, &history);
         }
         if let Some(u) = e.update_args() {
-            app.update(&u);
+            app.update(&u, &mut history);
         }
     }
 }

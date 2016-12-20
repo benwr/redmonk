@@ -23,23 +23,31 @@ pub trait Rule<Value: Copy> {
 }
 
 pub struct ElementaryCellularAutomaton {
-    rule_no: u8,
-    size: usize,
-    wrap: bool,
-    default: bool,
+    pub rule: u8,
+    pub size: usize,
+    pub wrap: bool,
+    pub default: bool,
 }
 
 impl Rule<bool> for ElementaryCellularAutomaton {
     fn neighborhood(&self, index: usize) -> Vec<Option<usize>> {
         vec![
-            if index % self.size == 0 {
-                None
+            if index <= 0 {
+                if self.wrap {
+                    Some(self.size - 1)
+                } else {
+                    None
+                }
             } else {
                 Some(index - 1)
             },
             Some(index),
-            if index % self.size == self.size - 1 {
-                None
+            if index >= self.size - 1 {
+                if self.wrap {
+                    Some(0)
+                } else {
+                    None
+                }
             } else {
                 Some(index + 1)
             }
@@ -47,10 +55,16 @@ impl Rule<bool> for ElementaryCellularAutomaton {
     }
 
     fn value(&self, index: usize, neighbor_values: &[Option<bool>]) -> bool {
-        if let Some(p) = neighbor_values[0] {
-            p
-        } else {
-            false
-        }
+        let mut rule_index = 0u8;
+        for i in 0..3 {
+            let val = match neighbor_values.get(i) {
+                None => self.default,
+                Some(&None) => self.default,
+                Some(&Some(n)) => n
+            };
+            rule_index <<= 1;
+            rule_index |= val as u8;
+        };
+        ((self.rule >> rule_index) & 1) == 1
     }
 }
