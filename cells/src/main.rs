@@ -24,13 +24,13 @@ impl App {
         const BLACK: [f32; 4] = [0.0, 0.0, 0.0, 1.0];
         const WHITE: [f32; 4] = [1.0, 1.0, 1.0, 1.0];
 
-        let square = rectangle::square(0.0, 0.0, 10.0);
+        let square = rectangle::square(0.0, 0.0, 5.0);
         self.gl.draw(args.viewport(), |c, gl| {
             clear(WHITE, gl);
             for y in 0..history.len() {
                 for x in 0..history[y].len() {
                     let transform = c.transform
-                        .trans((x * 12) as f64, (y * 12) as f64);
+                        .trans((x * 5) as f64, (y * 5) as f64);
                     if history[y][x] {
                         rectangle(BLACK, square, transform, gl);
                     }
@@ -39,7 +39,7 @@ impl App {
         });
     }
     fn update(&mut self, args: &UpdateArgs, history: &mut Vec<Vec<bool>>) {
-        if history.len() > 80 {
+        if history.len() > 160 {
             return;
         }
         let last_state = if history.len() > 0 {
@@ -68,22 +68,31 @@ fn main() {
     let mut app = App {
         gl: GlGraphics::new(opengl),
         aut: ElementaryCellularAutomaton {
-            rule: 110,
-            size: 80,
+            rule: 120,
+            size: 160,
             wrap: true,
             default: false,
         }
     };
     let mut history = vec![vec![
-        false, false, false, true, true, false, false, false, true, 
-        false, false, false, true, true, false, false, false, true, 
-        false, false, false, false, true, false, false, false, true, 
-        false, false, false, false, true, false, false, false, true, 
-        false, false, false, false, true, true, false, false, true, 
-        false, false, false, true, true, false, false, false, true, 
-        false, false, false, true, true, false, false, false, true, 
-        false, false, false, true, true, false, false, false, true, 
+        false, false, false, true, true, false, false, false, true,
+        false, false, false, true, true, false, false, false, true,
+        false, false, false, false, true, false, false, false, true,
+        false, false, false, false, true, false, false, false, true,
+        false, false, false, false, true, true, false, false, true,
+        false, false, false, true, true, false, false, false, true,
+        false, false, false, true, true, false, false, false, true,
+        false, false, false, true, true, false, false, false, true,
         false, false, false, true, true, false, false, false,
+        false, false, false, true, true, false, false, true,
+        false, false, false, true, true, false, false, false, true,
+        false, false, false, false, true, false, false, false, true,
+        false, false, false, false, true, false, false, false, true,
+        false, false, false, false, true, false, false, true, true,
+        false, false, false, true, false, false, false, true, false,
+        false, false, true, true, false, false, false, true, true,
+        false, false, true, true, false, false, false, true, false,
+        false, false, true, true, false, false, false, true, true,
     ]];
     let mut events = window.events();
     while let Some(e) = events.next(&mut window) {
